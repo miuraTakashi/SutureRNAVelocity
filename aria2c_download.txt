@@ -1,0 +1,18 @@
+http://ftp.sra.ebi.ac.uk/vol1/run/SRR132/SRR13288596/E17_batch_1_possorted_genome_bam.bam
+ dir=./downloads/SRR13288596
+ out=E17_batch_1_possorted_genome_bam.bam
+http://ftp.sra.ebi.ac.uk/vol1/run/SRR132/SRR13288596/E17_batch_1_possorted_genome_bam.bam.bai
+ dir=./downloads/SRR13288596
+ out=E17_batch_1_possorted_genome_bam.bam.bai
+http://ftp.sra.ebi.ac.uk/vol1/run/SRR132/SRR13288597/E17_batch_2_possorted_genome_bam.bam
+ dir=./downloads/SRR13288597
+ out=E17_batch_2_possorted_genome_bam.bam
+http://ftp.sra.ebi.ac.uk/vol1/run/SRR132/SRR13288597/E17_batch_2_possorted_genome_bam.bam.bai
+ dir=./downloads/SRR13288597
+ out=E17_batch_2_possorted_genome_bam.bam.bai
+http://ftp.sra.ebi.ac.uk/vol1/run/SRR132/SRR13288598/E17_batch_3_possorted_genome_bam.bam
+ dir=./downloads/SRR13288598
+ out=E17_batch_3_possorted_genome_bam.bam
+http://ftp.sra.ebi.ac.uk/vol1/run/SRR132/SRR13288598/E17_batch_3_possorted_genome_bam.bam.bai
+ dir=./downloads/SRR13288598
+ out=E17_batch_3_possorted_genome_bam.bam.bai

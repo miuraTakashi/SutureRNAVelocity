@@ -1,0 +1,17 @@
+[project]
+name = "suturernavelocity"
+version = "0.1.0"
+description = "RNA velocity analysis of mouse cranial suture scRNA-seq (GSE163693)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "scvelo",
+    "scanpy",
+    "loompy",
+    "anndata",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "scipy",
+    "jupyter",
+]

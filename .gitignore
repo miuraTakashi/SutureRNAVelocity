@@ -1,0 +1,32 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# macOS
+.DS_Store
+
+# Large data files (BAM, GTF, loom, h5ad)
+*.bam
+*.bam.bai
+*.bam.aria2
+*.gtf
+*.loom
+*.h5ad
+downloads/
+sorted_bam/
+loom_output/
+figures/
+
+# GEO raw data
+GSE163693_RAW/
+GSE163693_RAW.tar
+
+# Misc
+bam_urls.txt
