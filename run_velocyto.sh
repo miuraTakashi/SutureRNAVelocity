@@ -10,14 +10,7 @@ OUTDIR="loom_output"
 
 mkdir -p "$OUTDIR"
 
-echo "=== [$(date)] Starting velocyto batch_1 ==="
-velocyto run \
-  -b "$BARCODES" \
-  -o "$OUTDIR" \
-  --samtools-threads 4 \
-  downloads/SRR13288596/E17_batch_1_possorted_genome_bam.bam \
-  "$ANNOTATION"
-echo "=== [$(date)] batch_1 done ==="
+echo "=== [$(date)] Skipping batch_1 (already done) ==="
 
 echo "=== [$(date)] Starting velocyto batch_2 ==="
 velocyto run \

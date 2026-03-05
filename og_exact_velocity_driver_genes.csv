@@ -1,0 +1,9 @@
+OG1,OG2,OG3,OG4
+Tnc,Malat1,Col12a1,Mef2c
+Malat1,Gpc3,Actb,Smpd3
+Gpc3,Tnc,Tnc,Aspn
+Mef2c,Actb,Gpc3,Actb
+Col12a1,Smpd3,Aspn,Col12a1
+Actb,Aspn,Malat1,Malat1
+Smpd3,Col12a1,Smpd3,Gpc3
+Aspn,Mef2c,Mef2c,Tnc
