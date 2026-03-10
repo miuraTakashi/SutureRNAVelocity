@@ -1,5 +1,5 @@
 """
-OG1-4 サブセット RNA Velocity 解析（確定版）
+OG1–4 + PO1–2 サブセット RNA Velocity 解析（確定版）
 GSE163693_E15_17_composite_metadata.csv.gz の正確なクラスターラベルを使用
 """
 
@@ -20,13 +20,14 @@ warnings.filterwarnings("ignore")
 scv.settings.verbosity = 3
 OUTDIR = "figures_og_exact"
 sc.settings.figdir = OUTDIR
+scv.settings.figdir = OUTDIR
 os.makedirs(OUTDIR, exist_ok=True)
 
 WORKDIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(WORKDIR)
 
 # ============================================================
-# 1. メタデータ読み込み → E17 OG1-4 バーコードを取得
+# 1. メタデータ読み込み → E17 OG1–4 + PO1–2 バーコードを取得
 # ============================================================
 print("Loading metadata ...")
 meta = pd.read_csv("GSE163693_E15_17_composite_metadata.csv.gz", index_col=0)
@@ -35,10 +36,10 @@ meta_e17 = meta[meta["orig.ident"] == "E17hiseq"].copy()
 print(f"  E17 cells in metadata: {len(meta_e17)}")
 print(f"  Cluster distribution:\n{meta_e17['Cluster'].value_counts().to_string()}")
 
-# OG1-4 に絞る
-og_labels = ["OG1", "OG2", "OG3", "OG4"]
+# OG1–4 + PO1–2 に絞る
+og_labels = ["OG1", "OG2", "OG3", "OG4", "PO1", "PO2"]
 meta_og = meta_e17[meta_e17["Cluster"].isin(og_labels)].copy()
-print(f"\n  OG1-4 cells in E17 metadata: {len(meta_og)}")
+print(f"\n  OG1–4 + PO1–2 cells in E17 metadata: {len(meta_og)}")
 print(meta_og["Cluster"].value_counts().to_string())
 
 # バーコードの末尾 _1 を除去して velocity AnnData 形式に合わせる
@@ -48,7 +49,7 @@ og_barcodes = set(meta_og.index)
 print(f"\n  OG barcodes after stripping suffix: {len(og_barcodes)} (e.g. {list(og_barcodes)[:3]})")
 
 # ============================================================
-# 2. velocity AnnData を読み込み、OG1-4 にサブセット
+# 2. velocity AnnData を読み込み、OG1–4 + PO1–2 にサブセット
 # ============================================================
 print("\nLoading E17_suture_velocity.h5ad ...")
 adata_full = sc.read_h5ad("E17_suture_velocity.h5ad")
@@ -65,7 +66,7 @@ print(f"\nOG subset: {adata_og.shape[0]} cells")
 print(adata_og.obs["og_cluster"].value_counts().to_string())
 
 # ============================================================
-# 3. 全体 UMAP 上で OG1-4 の位置を確認
+# 3. 全体 UMAP 上で OG1–4 + PO1–2 の位置を確認
 # ============================================================
 adata_full.obs["og_cluster"] = "other"
 adata_full.obs.loc[common, "og_cluster"] = meta_og.loc[common, "Cluster"]
@@ -73,8 +74,16 @@ adata_full.obs.loc[common, "og_cluster"] = meta_og.loc[common, "Cluster"]
 sc.pl.umap(
     adata_full,
     color="og_cluster",
-    palette=["#e41a1c", "#ff7f00", "#4daf4a", "#984ea3", "#cccccc"],
-    title="OG1-4 location in full UMAP",
+    palette=[
+        "#e41a1c",  # OG1
+        "#ff7f00",  # OG2
+        "#4daf4a",  # OG3
+        "#984ea3",  # OG4
+        "#377eb8",  # PO1
+        "#a65628",  # PO2
+        "#cccccc",  # other
+    ],
+    title="OG1–4 + PO1–2 location in full UMAP",
     save="_og_in_full_umap.png",
 )
 print(f"  Saved {OUTDIR}/umap_og_in_full_umap.png")
@@ -127,13 +136,14 @@ print(f"  OG merged with loom: {adata_og_vel.shape[0]} cells x {adata_og_vel.sha
 adata_og_vel.obs["og_cluster"] = meta_og.reindex(adata_og_vel.obs_names)["Cluster"]
 
 # ============================================================
-# 5. 前処理：OG サブセット専用に近傍グラフ・UMAP を再計算
+# 5. 前処理：OG+PO サブセット専用に近傍グラフ・UMAP を再計算
+#    （使用している遺伝子は E17_suture_velocity.h5ad 由来の全 HVG）
 # ============================================================
 print("\nPreprocessing OG subset ...")
 scv.pp.filter_and_normalize(adata_og_vel, min_shared_counts=20)
 sc.pp.highly_variable_genes(adata_og_vel, n_top_genes=2000, flavor="seurat")
 
-# 近傍グラフ・UMAP を OG サブセットで新規計算
+# 近傍グラフ・UMAP を OG+PO サブセットで新規計算
 sc.pp.pca(adata_og_vel)
 sc.pp.neighbors(adata_og_vel, n_pcs=30, n_neighbors=30)
 sc.tl.umap(adata_og_vel)
@@ -142,10 +152,17 @@ sc.tl.umap(adata_og_vel)
 scv.pp.moments(adata_og_vel, n_pcs=30, n_neighbors=30)
 
 # og_cluster をカテゴリカル型に変換して色指定
-og_palette = ["#e41a1c", "#ff7f00", "#4daf4a", "#984ea3"]  # OG1,2,3,4
+og_palette = [
+    "#e41a1c",  # OG1
+    "#ff7f00",  # OG2
+    "#4daf4a",  # OG3
+    "#984ea3",  # OG4
+    "#377eb8",  # PO1
+    "#a65628",  # PO2
+]
 adata_og_vel.obs["og_cluster"] = pd.Categorical(
     adata_og_vel.obs["og_cluster"],
-    categories=["OG1", "OG2", "OG3", "OG4"],
+    categories=["OG1", "OG2", "OG3", "OG4", "PO1", "PO2"],
 )
 adata_og_vel.uns["og_cluster_colors"] = og_palette
 
@@ -153,8 +170,8 @@ adata_og_vel.uns["og_cluster_colors"] = og_palette
 sc.pl.umap(
     adata_og_vel,
     color="og_cluster",
-    palette=["#e41a1c", "#ff7f00", "#4daf4a", "#984ea3"],
-    title="OG1-4 subset UMAP",
+    palette=og_palette,
+    title="OG1–4 + PO1–2 subset UMAP",
     save="_og_exact_clusters.png",
 )
 print(f"  Saved {OUTDIR}/umap_og_exact_clusters.png")
@@ -166,7 +183,7 @@ scv.pl.proportions(adata_og_vel, groupby="og_cluster",
 # ============================================================
 # 6. Dynamical velocity
 # ============================================================
-print("\nRecovering dynamics (OG1-4, dynamical model) ...")
+print("\nRecovering dynamics (OG1–4 + PO1–2, dynamical model) ...")
 scv.tl.recover_dynamics(adata_og_vel, n_jobs=4)
 scv.tl.velocity(adata_og_vel, mode="dynamical")
 scv.tl.velocity_graph(adata_og_vel)
@@ -176,7 +193,7 @@ scv.pl.velocity_embedding_stream(
     adata_og_vel,
     basis="umap",
     color="og_cluster",
-    title="OG1-4 RNA velocity stream",
+    title="OG1–4 + PO1–2 RNA velocity stream",
     save="_og_exact_stream.png",
 )
 scv.pl.velocity_embedding(
@@ -203,16 +220,18 @@ scv.pl.scatter(
     save="_og_exact_latent_time.png",
 )
 
-# OG クラスターごとの latent time 分布
+# OG/PO クラスターごとの latent time 分布
 fig, ax = plt.subplots(figsize=(7, 4))
-for og, col in [("OG1", "#e41a1c"), ("OG2", "#ff7f00"),
-                ("OG3", "#4daf4a"), ("OG4", "#984ea3")]:
+for og, col in zip(
+    ["OG1", "OG2", "OG3", "OG4", "PO1", "PO2"],
+    og_palette,
+):
     cells = adata_og_vel.obs[adata_og_vel.obs["og_cluster"] == og]["latent_time"]
     if len(cells) > 0:
         cells.hist(bins=30, alpha=0.6, label=og, color=col, ax=ax, density=True)
 ax.set_xlabel("Latent time")
 ax.set_ylabel("Density")
-ax.set_title("Latent time distribution per OG cluster")
+ax.set_title("Latent time distribution per OG/PO cluster")
 ax.legend()
 plt.tight_layout()
 plt.savefig(f"{OUTDIR}/og_latent_time_hist.png", dpi=150)

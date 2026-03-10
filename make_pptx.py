@@ -33,6 +33,8 @@ C_OG1    = RGBColor(0xe4, 0x1a, 0x1c)
 C_OG2    = RGBColor(0xff, 0x7f, 0x00)
 C_OG3    = RGBColor(0x4d, 0xaf, 0x4a)
 C_OG4    = RGBColor(0x98, 0x4e, 0xa3)
+C_PO1    = RGBColor(0x37, 0x7e, 0xb8)
+C_PO2    = RGBColor(0xa6, 0x56, 0x28)
 
 prs = Presentation()
 prs.slide_width  = SLIDE_W
@@ -126,12 +128,22 @@ add_text(slide,
          0.5, 4.55, 12.3, 0.4,
          size=12, color=RGBColor(0xaa, 0xaa, 0xaa), align=PP_ALIGN.CENTER)
 
-# OG color circles as decoration
-for i, (label, rgb) in enumerate(
-        [("OG1", C_OG1), ("OG2", C_OG2), ("OG3", C_OG3), ("OG4", C_OG4)]):
-    x = 3.8 + i * 1.5
-    add_rect(slide, x, 5.4, 0.9, 0.35, fill=rgb)
-    add_text(slide, label, x, 5.4, 0.9, 0.35,
+# OG/PO color circles as decoration
+labels_colors = [
+    ("OG1", C_OG1),
+    ("OG2", C_OG2),
+    ("OG3", C_OG3),
+    ("OG4", C_OG4),
+    ("PO1", C_PO1),
+    ("PO2", C_PO2),
+]
+for i, (label, rgb) in enumerate(labels_colors):
+    row = i // 3
+    col = i % 3
+    x = 3.5 + col * 1.6
+    y = 5.2 + row * 0.5
+    add_rect(slide, x, y, 0.9, 0.35, fill=rgb)
+    add_text(slide, label, x, y, 0.9, 0.35,
              size=13, bold=True, color=C_WHITE, align=PP_ALIGN.CENTER)
 
 add_text(slide, "SutureRNAVelocity Pipeline", 0.5, 6.9, 12.3, 0.4,
@@ -152,8 +164,8 @@ steps = [
      "Spliced / Unspliced count generation\nGencode vM25 annotation (chr-prefix removed)"),
     ("3", "scVelo – Full dataset",
      "5,407 cells × 904 genes\nDynamical model, Leiden clustering (19 clusters)"),
-    ("4", "OG1–4 Subset",
-     "1,772 cells identified by metadata labels\n(GSE163693_E15_17_composite_metadata.csv.gz)"),
+    ("4", "OG/PO Subset",
+     "2,017 cells (OG1–4 + PO1–2) identified by metadata labels\n(GSE163693_E15_17_composite_metadata.csv.gz)"),
     ("5", "CellRank (GPCCA)",
      "Bidirectional trajectory analysis\nTerminal: OG4 + OG1 | Initial: OG3"),
     ("6", "Local Velocity",
@@ -208,21 +220,23 @@ add_text(slide, "Spliced / Unspliced proportions per cluster", 6.6, 5.6, 6.5, 0.
          size=11, color=C_SUB, align=PP_ALIGN.CENTER)
 
 # ============================================================
-# Slide 5: OG1–4 クラスター定義
+# Slide 5: OG/PO クラスター定義
 # ============================================================
 slide = prs.slides.add_slide(BLANK)
-slide_header(slide, "OG1–4 Cluster Definition",
+slide_header(slide, "OG/PO Cluster Definition",
              "Farmer et al. 2021 | Barcode-level identification using metadata labels")
 
 add_image(slide, f"{OG_DIR}/umap_og_in_full_umap.png",
           0.2, 1.1, width=5.5)
 
-# テーブル形式で OG クラスターを説明
+# テーブル形式で OG/PO クラスターを説明
 rows = [
-    ("OG1", "603 cells", "Osteoprogenitors (earliest)", "Erg, Pthlh, Six2", C_OG1),
-    ("OG2", "548 cells", "Suture-resident pre-osteoblasts", "Lef1, Inhba", C_OG2),
-    ("OG3", "315 cells", "Periosteal pre-osteoblasts", "Mmp13, Podnl1", C_OG3),
+    ("OG1", "548 cells", "Osteoprogenitors (earliest)", "Erg, Pthlh, Six2", C_OG1),
+    ("OG2", "315 cells", "Suture-resident pre-osteoblasts", "Lef1, Inhba", C_OG2),
+    ("OG3", "603 cells", "Periosteal pre-osteoblasts", "Mmp13, Podnl1", C_OG3),
     ("OG4", "306 cells", "Mature osteoblasts", "Ifitm5, Dmp1, Sost", C_OG4),
+    ("PO1", "206 cells", "Periosteal osteoblasts (outer bone)", "", C_PO1),
+    ("PO2", "39 cells",  "Periosteal osteoblasts (mature subset)", "", C_PO2),
 ]
 headers = ["Cluster", "Cells", "Cell type", "Markers"]
 col_w = [1.0, 1.2, 3.2, 2.5]
@@ -245,39 +259,45 @@ for i, (cluster, cells, cell_type, markers, rgb) in enumerate(rows):
         add_text(slide, val, x + 0.05, y + 0.05, w - 0.1, 0.7,
                  size=11, bold=bold, color=color)
 
-add_text(slide, "Total: 1,772 E17.5 OG cells", 6.0, 5.3, 7.2, 0.4,
+add_text(slide, "Total: 2,017 E17.5 OG/PO cells", 6.0, 5.3, 7.2, 0.4,
          size=12, bold=True, color=C_ACCENT)
 add_text(slide, "Barcodes matched to GSE163693_E15_17_composite_metadata.csv.gz",
          6.0, 5.75, 7.2, 0.4, size=10, color=C_SUB)
-add_text(slide, "OG1–4 location in full UMAP", 0.2, 5.6, 5.5, 0.4,
+add_text(slide, "OG1–4 + PO1–2 location in full UMAP", 0.2, 5.6, 5.5, 0.4,
          size=11, color=C_SUB, align=PP_ALIGN.CENTER)
 
 # ============================================================
-# Slide 6: OG サブセット UMAP + velocity stream
+# Slide 6: OG/PO サブセット UMAP + velocity stream
 # ============================================================
 slide = prs.slides.add_slide(BLANK)
-slide_header(slide, "OG1–4 Subset: UMAP and RNA Velocity",
-             "1,772 cells | Re-computed neighbors, UMAP, and velocity | Dynamical model")
+slide_header(slide, "OG/PO Subset: UMAP and RNA Velocity",
+             "2,017 cells (OG1–4 + PO1–2) | Re-computed neighbors, UMAP, and velocity | Dynamical model")
 
 add_image(slide, f"{OG_DIR}/umap_og_exact_clusters.png",
           0.2, 1.1, width=6.2)
 add_image(slide, f"{OG_DIR}/velocity_stream.png",
           6.6, 1.1, width=6.5)
 
-add_text(slide, "OG1–4 subset UMAP", 0.2, 5.6, 6.0, 0.4,
+add_text(slide, "OG1–4 + PO1–2 subset UMAP", 0.2, 5.6, 6.0, 0.4,
          size=11, color=C_SUB, align=PP_ALIGN.CENTER)
 add_text(slide, "RNA velocity stream (dynamical model)", 6.6, 5.6, 6.5, 0.4,
          size=11, color=C_SUB, align=PP_ALIGN.CENTER)
-add_footnote(slide,
+add_footnote(
+    slide,
     "OG1 (red): progenitors | OG2 (orange): suture pre-OB | "
-    "OG3 (green): periosteal pre-OB | OG4 (purple): mature OB")
+    "OG3 (green): periosteal pre-OB | OG4 (purple): mature OB | "
+    "PO1 (blue): periosteal OB | PO2 (brown): periosteal OB (mature subset)",
+)
 
 # ============================================================
 # Slide 7: Latent time
 # ============================================================
 slide = prs.slides.add_slide(BLANK)
-slide_header(slide, "OG1–4 Subset: Latent Time",
-             "Differentiation pseudotime estimated by scVelo dynamical model")
+slide_header(
+    slide,
+    "OG/PO Subset: Latent Time",
+    "Differentiation pseudotime estimated by scVelo dynamical model",
+)
 
 add_image(slide, f"{OG_DIR}/latent_time.png",
           0.3, 1.1, width=6.2)
@@ -286,7 +306,7 @@ add_image(slide, f"{OG_DIR}/og_latent_time_hist.png",
 
 add_text(slide, "Latent time on UMAP", 0.3, 5.65, 6.0, 0.4,
          size=11, color=C_SUB, align=PP_ALIGN.CENTER)
-add_text(slide, "Latent time distribution per OG cluster", 6.7, 5.65, 6.3, 0.4,
+add_text(slide, "Latent time distribution per OG/PO cluster", 6.7, 5.65, 6.3, 0.4,
          size=11, color=C_SUB, align=PP_ALIGN.CENTER)
 add_footnote(slide, "0 = earliest (progenitor), 1 = latest (mature osteoblast)")
 
@@ -371,12 +391,14 @@ add_text(slide, "Velocity confidence (left: UMAP, right: boxplot per cluster)",
 add_text(slide, "Velocity stream in PCA space",
          7.2, 5.6, 5.9, 0.4, size=10, color=C_SUB, align=PP_ALIGN.CENTER)
 
-# Confidence 表
+# Confidence 表（OG1–4 + PO1–2, run_og_local_velocity.py の出力に基づく）
 conf_data = [
-    ("OG1", "0.868", "0.879", C_OG1),
-    ("OG2", "0.865", "0.902", C_OG2),
-    ("OG3", "0.801", "0.829", C_OG3),
-    ("OG4", "0.768", "0.799", C_OG4),
+    ("OG1", "0.839", "0.845", C_OG1),
+    ("OG2", "0.815", "0.832", C_OG2),
+    ("OG3", "0.820", "0.834", C_OG3),
+    ("OG4", "0.852", "0.884", C_OG4),
+    ("PO1", "0.822", "0.849", C_PO1),
+    ("PO2", "0.747", "0.788", C_PO2),
 ]
 add_rect(slide, 0.2, 6.05, 6.8, 0.38, fill=C_HEAD)
 for j, h in enumerate(["Cluster", "Mean", "Median"]):

@@ -1,9 +1,7 @@
 """
-OG1-4 CellRank 解析
-- root 固定なし（脱分化 OG4→OG2 を含む双方向の流れを許容）
-- CellRank で initial state / terminal state を確率的に同定
-- 各状態への吸収確率（fate probability）を計算
-- PAGA トポロジーも可視化
+OG1–4 + PO1–2 CellRank 解析
+- root 固定なし（双方向の流れとループを許容）
+- CellRank で macrostates を同定し、PAGA トポロジーとともに解釈
 """
 
 import os
@@ -27,8 +25,14 @@ os.makedirs(OUTDIR, exist_ok=True)
 WORKDIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(WORKDIR)
 
-OG_COLORS = {"OG1": "#e41a1c", "OG2": "#ff7f00",
-             "OG3": "#4daf4a", "OG4": "#984ea3"}
+OG_COLORS = {
+    "OG1": "#e41a1c",
+    "OG2": "#ff7f00",
+    "OG3": "#4daf4a",
+    "OG4": "#984ea3",
+    "PO1": "#377eb8",
+    "PO2": "#a65628",
+}
 OG_PALETTE = list(OG_COLORS.values())
 
 # ============================================================
@@ -40,7 +44,7 @@ print(f"  {adata.n_obs} cells x {adata.n_vars} genes")
 
 adata.obs["og_cluster"] = pd.Categorical(
     adata.obs["og_cluster"].astype(str),
-    categories=["OG1", "OG2", "OG3", "OG4"],
+    categories=["OG1", "OG2", "OG3", "OG4", "PO1", "PO2"],
 )
 adata.uns["og_cluster_colors"] = OG_PALETTE
 
@@ -55,9 +59,12 @@ if "velocity_graph" not in adata.uns:
 
 # velocity stream をそのまま表示（脱分化を含む流れ）
 scv.pl.velocity_embedding_stream(
-    adata, basis="umap", color="og_cluster",
-    title="OG1-4 velocity stream (no root constraint)",
-    dpi=150, save="_og_noroot_stream.png",
+    adata,
+    basis="umap",
+    color="og_cluster",
+    title="OG1–4 + PO1–2 velocity stream (no root constraint)",
+    dpi=150,
+    save="_og_noroot_stream.png",
 )
 
 # ============================================================
@@ -82,8 +89,9 @@ sc.pl.paga(
     edge_width_scale=2,
     min_edge_width=1,
     threshold=0.01,
-    title="PAGA: OG1-4 topology\n(edge width = transition strength)",
-    ax=ax, show=False,
+    title="PAGA: OG/PO topology\n(edge width = transition strength)",
+    ax=ax,
+    show=False,
 )
 plt.tight_layout()
 plt.savefig(f"{OUTDIR}/og_paga_graph.png", dpi=150, bbox_inches="tight")
@@ -192,20 +200,54 @@ print(f"  Saved {OUTDIR}/cr_diff_vector_field.png")
 
 # ============================================================
 # 5. GPCCA で macrostate（大局的状態）を同定
+#    ※可視化ラベルは常に元の OG/PO クラスター（og_cluster）に統一
 # ============================================================
 print("\nGPCCA: identifying macrostates ...")
 estimator = cr.estimators.GPCCA(combined_kernel)
 
-# n_states=4 (OG1〜OG4 を想定)
-estimator.compute_macrostates(n_states=4, cluster_key="og_cluster")
-print(f"  Macrostates identified:")
+# n_states は 4–6 程度で十分。ここでは 6 とし、OG1–4 + PO1–2 を想定。
+estimator.compute_macrostates(n_states=6, cluster_key="og_cluster")
+print("  Macrostates identified (raw labels):")
 print(estimator.macrostates.value_counts().to_string())
 
-estimator.plot_macrostates(which="all", basis="umap",
-                           title="CellRank macrostates")
+# 各 macrostate を、その中で最多の og_cluster にマッピング
+macro = estimator.macrostates
+major_map = {}
+for state in macro.cat.categories:
+    idx = macro[macro == state].index
+    if len(idx) == 0:
+        continue
+    majority = (
+        adata.obs.loc[idx, "og_cluster"]
+        .value_counts()
+        .idxmax()
+    )
+    major_map[state] = majority
+
+adata.obs["macro_major"] = macro.replace(major_map)
+adata.obs["macro_major"] = pd.Categorical(
+    adata.obs["macro_major"],
+    categories=adata.obs["og_cluster"].cat.categories,
+)
+
+print("\n  Macrostate → og_cluster mapping used for plots:")
+for k, v in major_map.items():
+    print(f"    {k} -> {v}")
+
+# 可視化は常に OG/PO ラベルで統一
+fig, ax = plt.subplots(figsize=(5, 5))
+sc.pl.umap(
+    adata,
+    color="macro_major",
+    palette=OG_PALETTE,
+    ax=ax,
+    show=False,
+    title="CellRank macrostates (colored by OG/PO cluster)",
+)
+plt.tight_layout()
 plt.savefig(f"{OUTDIR}/cr_macrostates.png", dpi=150, bbox_inches="tight")
 plt.close()
-print(f"  Saved {OUTDIR}/cr_macrostates.png")
+print(f"  Saved {OUTDIR}/cr_macrostates.png (labels unified to OG/PO)")
 
 # ============================================================
 # 6. ループを許容したトポロジーの解釈

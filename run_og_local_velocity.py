@@ -1,7 +1,7 @@
 """
-OG1-4 局所 velocity 可視化
+OG1–4 + PO1–2 局所 velocity 可視化
 - グリッド密度・平滑化を変えて局所の流れを確認
-- 各 OG クラスター内で velocity を分離表示
+- 各クラスター内で velocity を分離表示
 - 位相ポートレート（spliced vs unspliced）でループか単調変化かを判定
 - PCA 空間での velocity（UMAP の投影歪みを除く）
 """
@@ -27,8 +27,14 @@ os.makedirs(OUTDIR, exist_ok=True)
 WORKDIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(WORKDIR)
 
-OG_COLORS = {"OG1": "#e41a1c", "OG2": "#ff7f00",
-             "OG3": "#4daf4a", "OG4": "#984ea3"}
+OG_COLORS = {
+    "OG1": "#e41a1c",
+    "OG2": "#ff7f00",
+    "OG3": "#4daf4a",
+    "OG4": "#984ea3",
+    "PO1": "#377eb8",
+    "PO2": "#a65628",
+}
 OG_PALETTE = list(OG_COLORS.values())
 
 # ============================================================
@@ -38,7 +44,7 @@ print("Loading E17_og_exact_velocity.h5ad ...")
 adata = sc.read_h5ad("E17_og_exact_velocity.h5ad")
 adata.obs["og_cluster"] = pd.Categorical(
     adata.obs["og_cluster"].astype(str),
-    categories=["OG1", "OG2", "OG3", "OG4"],
+    categories=["OG1", "OG2", "OG3", "OG4", "PO1", "PO2"],
 )
 adata.uns["og_cluster_colors"] = OG_PALETTE
 print(f"  {adata.n_obs} cells x {adata.n_vars} genes")
@@ -91,7 +97,7 @@ print(f"  Saved {OUTDIR}/local_smooth_compare.png")
 # ============================================================
 print("\n[2] Per-cluster local velocity ...")
 
-fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+fig, axes = plt.subplots(2, 3, figsize=(18, 10))
 axes = axes.flatten()
 
 # 全体の UMAP 座標範囲を取得
@@ -224,17 +230,25 @@ scv.pl.scatter(
     ax=axes[0], show=False,
 )
 # クラスターごとの velocity confidence 分布
+clusters = list(OG_COLORS.keys())
 conf_data = [
     adata.obs[adata.obs["og_cluster"] == og]["velocity_confidence"].dropna().values
-    for og in OG_COLORS.keys()
+    for og in clusters
 ]
-axes[1].boxplot(conf_data, labels=list(OG_COLORS.keys()),
-                patch_artist=True,
-                boxprops=dict(facecolor="lightblue"))
-for patch, color in zip(axes[1].findobj(matplotlib.patches.PathPatch), OG_PALETTE):
+axes[1].boxplot(
+    conf_data,
+    labels=clusters,
+    patch_artist=True,
+    boxprops=dict(facecolor="lightblue"),
+)
+for patch, color in zip(
+    axes[1].findobj(matplotlib.patches.PathPatch), OG_PALETTE
+):
     patch.set_facecolor(color)
 axes[1].set_ylabel("Velocity confidence")
-axes[1].set_title("Velocity confidence per cluster\n(< 0.4 suggests loop/noise)")
+axes[1].set_title(
+    "Velocity confidence per cluster\n(< 0.4 suggests loop/noise)"
+)
 axes[1].axhline(0.4, color="red", linestyle="--", alpha=0.7, label="threshold=0.4")
 axes[1].legend()
 
