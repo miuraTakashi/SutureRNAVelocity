@@ -18,7 +18,17 @@ import scanpy as sc
 import scvelo as scv
 import cellrank as cr
 
+# Batch correction 用（Harmony または他の方法）
+try:
+    from harmony import harmony
+    HAS_HARMONY = True
+except ImportError:
+    HAS_HARMONY = False
+    print("Warning: harmonyphpy not installed. Will use alternative batch correction.")
+
 OUTDIR = "figures_og_exact"
+OUTDIR_BATCH = "figures_og_exact_batch_corrected"
+os.makedirs(OUTDIR_BATCH, exist_ok=True)
 sc.settings.figdir = OUTDIR
 os.makedirs(OUTDIR, exist_ok=True)
 
@@ -52,17 +62,132 @@ print("Cluster composition:")
 print(adata.obs["og_cluster"].value_counts().to_string())
 
 # ============================================================
+# 1.5 Batch 情報の確認
+# ============================================================
+print("\n=== Batch Information ===")
+if "batch" in adata.obs:
+    print("Batch annotation found in adata.obs['batch']:")
+    print(adata.obs["batch"].value_counts().to_string())
+    batch_key = "batch"
+elif "SRR" in adata.obs.columns or "run_accession" in adata.obs.columns:
+    print("SRR/run_accession found, using as batch identifier.")
+    if "SRR" in adata.obs.columns:
+        batch_key = "SRR"
+    else:
+        batch_key = "run_accession"
+    print(adata.obs[batch_key].value_counts().to_string())
+else:
+    print("No explicit batch column found. Checking metadata...")
+    print(f"Available columns: {list(adata.obs.columns)}")
+    print("\nNote: If no batch information, batch effect may still be present.")
+    batch_key = None
+
+# ============================================================
+# 1.6 Batch Correction（Harmony または BBKNN）
+# ============================================================
+if batch_key:
+    print(f"\n=== Applying Batch Correction (batch key: {batch_key}) ===")
+    
+    # 方法1: Harmony（推奨）
+    if HAS_HARMONY:
+        print("Using Harmony for batch correction...")
+        adata_corrected = harmony(
+            adata,
+            key=batch_key,
+            max_iter_harmony=10,
+        )
+        print("  Harmony batch correction completed.")
+    else:
+        # 方法2: BBKNN を使用（scanpy に組み込まれている）
+        print("Using BBKNN for batch-aware neighbor graph...")
+        import bbknn
+        bbknn.bbknn(adata, batch_key=batch_key, n_pcs=50)
+        adata_corrected = adata.copy()
+        print("  BBKNN applied.")
+    
+    # Batch correction の効果を可視化
+    print("\nVisualizing batch correction effect...")
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    
+    # Before batch correction
+    sc.pl.umap(
+        adata,
+        color=batch_key,
+        ax=axes[0],
+        show=False,
+        title="Before Batch Correction",
+    )
+    
+    # After batch correction (PCA + UMAP を再計算)
+    sc.pp.pca(adata_corrected, n_comps=50)
+    sc.pp.neighbors(adata_corrected, n_neighbors=15, n_pcs=50)
+    sc.tl.umap(adata_corrected)
+    
+    sc.pl.umap(
+        adata_corrected,
+        color=batch_key,
+        ax=axes[1],
+        show=False,
+        title="After Batch Correction",
+    )
+    
+    plt.tight_layout()
+    plt.savefig(f"{OUTDIR_BATCH}/batch_correction_effect.png", dpi=150, bbox_inches="tight")
+    plt.close()
+    print(f"  Saved {OUTDIR_BATCH}/batch_correction_effect.png")
+    
+    # og_cluster による可視化も保存
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    
+    sc.pl.umap(
+        adata,
+        color="og_cluster",
+        palette=OG_PALETTE,
+        ax=axes[0],
+        show=False,
+        title="Before Batch Correction (colored by OG cluster)",
+    )
+    
+    sc.pl.umap(
+        adata_corrected,
+        color="og_cluster",
+        palette=OG_PALETTE,
+        ax=axes[1],
+        show=False,
+        title="After Batch Correction (colored by OG cluster)",
+    )
+    
+    plt.tight_layout()
+    plt.savefig(f"{OUTDIR_BATCH}/og_clusters_before_after.png", dpi=150, bbox_inches="tight")
+    plt.close()
+    print(f"  Saved {OUTDIR_BATCH}/og_clusters_before_after.png")
+    
+    # Batch correction 後のデータを使用
+    adata = adata_corrected
+    print("Using batch-corrected data for downstream analysis.")
+else:
+    print("\nNo batch key found. Proceeding without batch correction.")
+    print("Warning: If batch effect is present, results may be biased.")
+
+# ============================================================
 # 2. velocity graph の確認（root 固定なし）
 # ============================================================
+# Batch correction 後は velocity が無効になる可能性があるため、
+# 元のデータから velocity を引き継いで、PCA/UMAP の座標のみ更新
 if "velocity_graph" not in adata.uns:
+    print("\nRecomputing velocity graph (batch-corrected PCA space)...")
     scv.tl.velocity_graph(adata)
+else:
+    print("\nVelocity graph preserved from original data.")
+
+sc.settings.figdir = OUTDIR_BATCH
 
 # velocity stream をそのまま表示（脱分化を含む流れ）
 scv.pl.velocity_embedding_stream(
     adata,
     basis="umap",
     color="og_cluster",
-    title="OG1–4 + PO1–2 velocity stream (no root constraint)",
+    title="OG1–4 + PO1–2 velocity stream (no root constraint, batch-corrected)",
     dpi=150,
     save="_og_noroot_stream.png",
 )
@@ -89,14 +214,14 @@ sc.pl.paga(
     edge_width_scale=2,
     min_edge_width=1,
     threshold=0.01,
-    title="PAGA: OG/PO topology\n(edge width = transition strength)",
+    title="PAGA: OG/PO topology (batch-corrected)\n(edge width = transition strength)",
     ax=ax,
     show=False,
 )
 plt.tight_layout()
-plt.savefig(f"{OUTDIR}/og_paga_graph.png", dpi=150, bbox_inches="tight")
+plt.savefig(f"{OUTDIR_BATCH}/og_paga_graph.png", dpi=150, bbox_inches="tight")
 plt.close()
-print(f"  Saved {OUTDIR}/og_paga_graph.png")
+print(f"  Saved {OUTDIR_BATCH}/og_paga_graph.png")
 
 # ============================================================
 # 4. CellRank: velocity kernel で遷移行列を構築
@@ -192,11 +317,11 @@ for i, a in enumerate(clusters):
 
 ax.set_xlabel("UMAP1")
 ax.set_ylabel("UMAP2")
-ax.set_title("Coarse-grained differentiation vector field\n(based on net flux between OG clusters)")
+ax.set_title("Coarse-grained differentiation vector field (batch-corrected)\n(based on net flux between OG clusters)")
 plt.tight_layout()
-plt.savefig(f"{OUTDIR}/cr_diff_vector_field.png", dpi=150, bbox_inches="tight")
+plt.savefig(f"{OUTDIR_BATCH}/cr_diff_vector_field.png", dpi=150, bbox_inches="tight")
 plt.close()
-print(f"  Saved {OUTDIR}/cr_diff_vector_field.png")
+print(f"  Saved {OUTDIR_BATCH}/cr_diff_vector_field.png")
 
 # ============================================================
 # 5. GPCCA で macrostate（大局的状態）を同定
@@ -242,12 +367,12 @@ sc.pl.umap(
     palette=OG_PALETTE,
     ax=ax,
     show=False,
-    title="CellRank macrostates (colored by OG/PO cluster)",
+    title="CellRank macrostates (batch-corrected, colored by OG/PO cluster)",
 )
 plt.tight_layout()
-plt.savefig(f"{OUTDIR}/cr_macrostates.png", dpi=150, bbox_inches="tight")
+plt.savefig(f"{OUTDIR_BATCH}/cr_macrostates.png", dpi=150, bbox_inches="tight")
 plt.close()
-print(f"  Saved {OUTDIR}/cr_macrostates.png (labels unified to OG/PO)")
+print(f"  Saved {OUTDIR_BATCH}/cr_macrostates.png (labels unified to OG/PO)")
 
 # ============================================================
 # 6. ループを許容したトポロジーの解釈
@@ -258,21 +383,31 @@ print(f"  Saved {OUTDIR}/cr_macrostates.png (labels unified to OG/PO)")
 # そのため terminal / initial state や absorption probability は計算しない。
 
 # ============================================================
-# 7. velocity stream を OG サブセット用ディレクトリにコピー
+# 6.5 Batch correction の統計サマリー
 # ============================================================
-import shutil, glob
-for f in (glob.glob("figures/scvelo__og_noroot*.png")):
-    dst = os.path.join(OUTDIR, os.path.basename(f).replace("scvelo__og_noroot_", "noroot_"))
-    shutil.copy(f, dst)
+print("\n=== Summary Statistics ===")
+print(f"\nOG/PO cluster distribution (after batch correction):")
+print(adata.obs["og_cluster"].value_counts().to_string())
 
-# 保存
-adata.write("E17_og_exact_velocity.h5ad")
+# PAGA 接続性の比較（batch 補正前後）
+print(f"\nPAGA connectivity (after batch correction):")
+print(paga_conn.round(3).to_string())
 
-print("\n=== DONE ===")
-print(f"Figures: {OUTDIR}/")
-print("Key outputs:")
-print(f"  {OUTDIR}/og_paga_graph.png         -- 遷移強度グラフ")
-print(f"  {OUTDIR}/cr_macrostates.png        -- CellRank 大局的状態")
-print(f"  {OUTDIR}/cr_initial_terminal.png   -- 初期/終末状態")
-print(f"  {OUTDIR}/cr_fate_probabilities.png -- 各状態への到達確率")
-print(f"  {OUTDIR}/cr_fate_heatmap.png       -- OGクラスターごとの運命確率")
+# ============================================================
+# 7. 結果の保存
+# ============================================================
+print("\nSaving results...")
+adata.write(f"{OUTDIR_BATCH}/E17_og_exact_velocity_batch_corrected.h5ad")
+
+print(f"\n=== BATCH CORRECTION ANALYSIS COMPLETE ===")
+print(f"\nBatch-corrected results saved to: {OUTDIR_BATCH}/")
+print("\nKey outputs:")
+print(f"  {OUTDIR_BATCH}/batch_correction_effect.png")
+print(f"  {OUTDIR_BATCH}/og_clusters_before_after.png")
+print(f"  {OUTDIR_BATCH}/og_paga_graph.png         -- 遷移強度グラフ（バッチ補正済み）")
+print(f"  {OUTDIR_BATCH}/cr_macrostates.png        -- CellRank 大局的状態（バッチ補正済み）")
+print(f"  {OUTDIR_BATCH}/cr_diff_vector_field.png  -- 分化方向ベクトル場")
+print(f"\nComparison with original (non-corrected):")
+print(f"  {OUTDIR}/ (original directory)")
+print(f"\nBatch-corrected data saved to:")
+print(f"  {OUTDIR_BATCH}/E17_og_exact_velocity_batch_corrected.h5ad")

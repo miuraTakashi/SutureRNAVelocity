@@ -26,3 +26,44 @@
 - **figures_og_exact の再生成**
   - 途中で図が増えすぎたため、`figures_og_exact` 配下をいったん削除し、修正済みの `run_og_exact.py` を再実行して、OG/PO サブセットの図一式（UMAP、velocity、latent time、proportions など）と Mmp13 図を再生成した。
 
+---
+
+## 2026-03-25 セッション履歴（Copilot）
+
+- **スライド 8-9 の PAGA・CellRank 解析についての理論的解説**
+  - PAGA グラフの構造：無向グラフでクラスター間の接続を表す。エッジの太さ = クラスター間の遷移強度。
+  - CellRank の役割：RNA velocity と PAGA 接続情報を統合してクラスター間の運命遷移を推定。
+  - Initial / Terminal state の決定方法：CellRank GPCCA が定常分布を計算し、自動的に識別。このコードでは Terminal: OG4 + OG1、Initial: OG3。
+  - 遷移確率行列の構築：VelocityKernel（80%）+ ConnectivityKernel（20%）で加重統合。
+  - PAGA 接続の算出方法：各細胞の k-nearest neighbor グラフから、クラスター間の統計的に有意な相互作用（流出）を検出。
+
+- **Initial/Terminal state が生物学的知見と不一致する原因の検討**
+  - OG1 が初期かつ終末状態として識別される問題を指摘。
+  - 考えられる原因：
+    1. Kernel 加重比率（VelocityKernel 80% ← 高すぎる可能性）
+    2. scVelo 動力学モデルの収束不足（特に小規模クラスタ）
+    3. クラスタサイズの不均衡による bias
+    4. **Batch effect の存在**（3 バッチ SRR13288596–98 からのデータ）
+    5. GPCCA macrostate 数の設定不適切
+    6. Temperature パラメータの最適化不足
+
+- **Batch effect の説明と補正**
+  - Batch effect：異なる実験条件下（異なる時間、プレート、試薬ロット）で生成されたデータ間の技術的系統誤差。
+  - このコードの場合：3 つの SRR run（3 バッチ）からのデータが batch effect を含む可能性。
+  - Batch effect の症状：RNA 発現量、RNA velocity 方向が逆向きになる等。
+  - PAGA 接続性や velocity の推定精度に悪影響。
+
+- **Batch correction 対応への修正**
+  - `run_og_cellrank.py` を以下のように修正：
+    1. Harmony または BBKNN による batch correction の追加
+    2. Batch 情報の自動検出（`batch` 列および `SRR` / `run_accession` 列）
+    3. Batch correction 前後の UMAP 比較図の出力
+    4. 新しい出力ディレクトリ `figures_og_exact_batch_corrected/` に結果を保存
+  - 依存パッケージを `pyproject.toml` に追加：`bbknn`, `harmonyphpy`
+
+- **環境構築と実行準備**
+  - Python 仮想環境 `.venv` を新規作成
+  - 依存パッケージをインストール：numpy, scipy, scanpy, scvelo, cellrank, bbknn, harmonypy
+  - `run_og_cellrank.py` の batch correction 対応版の実行準備完了
+  - 次回：実際に batch correction 解析を実行し、OG1 が terminal state として識別されるかどうかを検証予定
+
