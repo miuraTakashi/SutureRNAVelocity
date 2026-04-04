@@ -67,3 +67,10 @@
   - `run_og_cellrank.py` の batch correction 対応版の実行準備完了
   - 次回：実際に batch correction 解析を実行し、OG1 が terminal state として識別されるかどうかを検証予定
 
+- **2026-04-04 セッション追加**
+  - `run_og_cycle_detection.py` を追加し、OG1–OG4 + PO1–PO2 のクラスタ間遷移で有向サイクルを検出・可視化する機能を実装。
+  - サイクルは NetworkX の `simple_cycles()` で検出し、サイクル内エッジを赤色で強調表示する可視化を `cycle_detection/cluster_cycle_strengths.png` に保存。
+  - `run_cell_cycle_scoring.py` を追加し、OG1–OG4 + PO1–PO2 の cell-cycle score を算出して UMAP、ボックスプロット、クラスター平均値グラフを出力する機能を追加。
+  - ただし、`E17_og_exact_velocity.h5ad` には canonical cell cycle marker genes が含まれておらず、現状では cell-cycle scoring が計算できないことを確認。
+  - スクリプトは有効なマーカー遺伝子が存在しない場合に明示的に停止し、`figures_cell_cycle/cell_cycle_error.txt` にエラーメッセージを書き出すように修正。
+

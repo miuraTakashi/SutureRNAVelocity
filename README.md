@@ -199,6 +199,31 @@ python run_og_local_velocity.py
 | `figures_og_exact/pca_stream.png` | PCA 空間での velocity |
 | `figures_og_exact/local_velocity_confidence.png` | coherence スコア |
 
+### Step 8: クラスタサイクル検出
+
+OG1–OG4 + PO1–PO2 のクラスタ間遷移から有向サイクルを検出し、サイクルを構成するエッジを赤色で強調表示します。
+
+```bash
+python run_og_cycle_detection.py
+```
+
+**主な出力:**
+| ファイル | 内容 |
+|---|---|
+| `cycle_detection/cluster_cycle_strengths.png` | クラスタサイクルとエッジ強度の可視化 |
+
+### Step 9: cell-cycle scoring の検証
+
+OG1–OG4 + PO1–PO2 の cell-cycle score を計算し、UMAP、ボックスプロット、クラスター平均値グラフを作成するスクリプトです。
+
+```bash
+python run_cell_cycle_scoring.py
+```
+
+**注意:**
+- 現在の `E17_og_exact_velocity.h5ad` には canonical cell cycle marker genes が含まれておらず、`run_cell_cycle_scoring.py` は有効な遺伝子が見つからない場合に停止します。
+- エラーが発生した場合は、`figures_cell_cycle/cell_cycle_error.txt` に詳細を出力します。
+
 ---
 
 ## ファイル構成
