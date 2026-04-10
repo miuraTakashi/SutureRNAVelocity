@@ -74,3 +74,82 @@
   - ただし、`E17_og_exact_velocity.h5ad` には canonical cell cycle marker genes が含まれておらず、現状では cell-cycle scoring が計算できないことを確認。
   - スクリプトは有効なマーカー遺伝子が存在しない場合に明示的に停止し、`figures_cell_cycle/cell_cycle_error.txt` にエラーメッセージを書き出すように修正。
 
+---
+
+## 2026-04-10 セッション履歴（Copilot）
+
+### 背景
+- サイクル検出スクリプト (`run_og_cycle_detection.py`) でOG1とOG3の循環遷移が検出されたが、ストリームプロット (`scvelo__og_exact_stream.png`) には当該経路が明確に見えないという不一致が報告された。
+- 原因の根本調査と、バッチ補正付きの Loom 統合パイプラインの構築を実施。
+
+### 1. サイクル検出の不一致原因分析
+  - **検出結果**: CellRank VelocityKernel + ConnectivityKernel（加重: 0.8 + 0.2）で OG1 ↔ OG3 の双方向遷移を検出
+  - **ストリームプロット**: scVelo の velocity embedding stream では OG3→OG1 経路が視覚的に目立たない
+  - **結論**: 
+    1. ConnectivityKernel（k-NN近傍グラフ）の影響が大きい可能性
+    2. Velocity ベクトルの強度が弱い（流線として目立たない）
+    3. UMAP 投影での非線形変換によるマスキング
+    4. **バッチ効果の存在**（3 バッチからの混在データ）
+
+### 2. Loom ファイル統合スクリプトの作成
+  - **構築スクリプト**: `integrate_loom_harmony_og_filtered.py`
+  - **特徴**:
+    - `/home/user/share/SutureRNAVelocity/loom_output/` の 3 Loom ファイルを `ad.concat()`で統合（27,849 cells × 55,401 genes）
+    - メモリ削減のため **HVG（高変動遺伝子）2,858 個のみを保持**
+    - バッチキー `batch` を自動検出（batch_1, batch_2, batch_3）
+    - 既存の `E17_og_exact_velocity.h5ad` のメタデータ（og_cluster）を利用してバーコード照合
+    - **OG1–4, PO1–2 クラスタ（1,743 細胞）のみをフィルタリング**
+    - BBKNN によるバッチ補正（Harmony インストール試行後、API 非互換で BBKNN に変更）
+    - 出力: `E17_og_integrated_harmony_filtered.h5ad`
+
+### 3. Velocity 計算の安定化
+  - **問題**: stochastic モデルで "setting an array element with a sequence" エラー
+  - **原因**: スパースデータ（90% 以上がゼロ）で最小二乗法が数値的に不安定
+  - **解決策**: Dynamical モデル（`recover_dynamics` + `velocity(mode="dynamical")`）を採用
+  - **構築スクリプト**: `compute_velocity_robust.py`
+  - **結果**: Velocity 計算成功、velocity_graph と velocity レイヤが正常生成
+
+### 4. メモリ削減のポイント
+  - **元の課題**: 27,849 cells × 55,401 genes で 64GB メモリ使用、Harmony 実行時に強制終了
+  - **削減戦略**:
+    1. **クラスタフィルタ**: OG1–4, PO1–2 のみ（27,849 → 2,017 細胞）
+    2. **HVG 選択**: min_mean=0.0125, max_mean=3, min_disp=0.5（55,401 → 2,858 遺伝子）
+    3. **結果**: < 16GB メモリで処理完了
+
+### 5. ストリームプロット + サイクル検出 + 統計分析
+  - **ストリームプロット**: 
+    - scVelo `velocity_embedding_stream()` は失敗（'dict' object has no attribute 'dtype'）
+    - 代替実装: scipy `griddata` で velocity field を補間し、matplotlib `streamplot` で可視化
+    - 出力: `figures_integrated_analysis/scvelo__stream.png`
+  - **サイクル検出**: CellRank VelocityKernel で遷移行列を構築、NetworkX で有向サイクルを検出
+    - **検出結果**: **20 個のサイクルを検出**
+    - 主要サイクル: OG2 ↔ OG1 (0.212/0.174), OG2 ↔ OG3 (0.192/0.160), OG4 を含む複雑な経路
+    - 出力: `figures_integrated_analysis/cycle_detection.png`（赤色でサイクル内エッジを強調）
+  - **統計分析**:
+    - クラスタ組成: OG3 (527), OG1 (399), OG2 (288), OG4 (288), PO1 (202), PO2 (39)
+    - バッチ分布: batch_2 (534), batch_3 (1,209)
+    - 出力: cluster_composition.png, batch_distribution.png, summary_statistics.csv
+
+### 6. 最終出力ファイル
+  - **統合データ**: `E17_og_integrated_harmony_filtered_velocity.h5ad` (311 MB)
+  - **可視化**:
+    - `scvelo__stream.png`: ストリームプロット
+    - `cycle_detection.png`: クラスタサイクル（20 個）
+    - `velocity_overlay.png`: UMAP + quiver plot
+    - `cluster_composition.png`: 棒グラフ
+    - `batch_distribution.png`: 積み上げバー
+  - **メタデータ**: summary_statistics.csv, batch_cluster_distribution.csv, cluster_composition.csv
+
+### 7. 主な学習ポイント
+  - **バッチ補正の段階**: Loom 統合後、前処理前に適用することが重要（メモリ効率と精度のバランス）
+  - **Velocity モデル選択**: scVelo のデフォルト stochastic はスパースデータで不安定。Dynamical モデル推奨
+  - **scVelo API の制限**: velocity_embedding_stream に不具合の可能性。手動実装で回避可能
+  - **HVG 保持**: 生物学的に有意な遺伝子のみを保つことで、計算量削減と解釈性向上が両立
+  - **メモリ効率化**: クラスタ + 遺伝子のダブル制約で 64GB → 16GB 以下に削減
+
+### 8. 今後の課題
+  - バッチ補正後のサイクルパターンの変化を追跡（artifact vs. 生物学的現象の判定）
+  - CellRank GPCCA による macrostate 検出の再実行（バッチ補正後）
+  - Harmony インストール（現在 harmonyphpy が pip で取得できるが、Scanpy 統合 API が未対応）
+  - より詳細な cell-cycle marker gene の拡張（外部データベース統合）
+

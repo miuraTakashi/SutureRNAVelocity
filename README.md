@@ -226,6 +226,56 @@ python run_cell_cycle_scoring.py
 
 ---
 
+### Step 10: Loom ファイル統合とバッチ補正（メモリ効率化）
+
+3 つの Loom ファイル（`/home/user/share/SutureRNAVelocity/loom_output/` に格納）を統合し、バッチ補正を行った上で OG1–4, PO1–2 クラスタに絞り込む解析パイプラインを実装。
+
+```bash
+# Step 10a: Loomファイル統合 + バッチ補正
+python integrate_loom_harmony_og_filtered.py
+
+# Step 10b: Velocityグラフ計算（Dynamicalモデル）  
+python compute_velocity_robust.py
+
+# Step 10c: ストリームプロット・サイクル検出・統計分析
+python run_final_analysis.py
+python generate_streamplot.py
+```
+
+**処理フロー:**
+
+1. **Loom 統合**: 3 ファイル（batch_1, 2, 3）を `ad.concat()` で結合（27,849 cells × 55,401 genes）
+2. **メタデータマッピング**: `E17_og_exact_velocity.h5ad` の OG クラスター情報を利用して、バーコード照合で 2,017 細胞を抽出
+3. **フィルタリング**: OG1–4 + PO1–2 のみを保持（1,743 cells/after QC）
+4. **メモリ削減**: Highly variable genes（2,858 遺伝子）のみを保持
+5. **バッチ補正**: BBKNN を用いて batch_2, batch_3 のバッチ効果を除去
+6. **Velocity 計算**: Dynamical モデル（recover_dynamics）で安定的に推定
+7. **ストリームプロット**: streamlines で velocity フローを可視化
+8. **サイクル検出**: CellRank VelocityKernel の遷移行列から NetworkX で有向サイクルを検出
+9. **統計・可視化**: クラスタ組成、バッチ分布、UMAP+velocity overlay を出力
+
+**主な出力:**
+
+| ファイル | 内容 |
+|---|---|
+| `E17_og_integrated_harmony_filtered_velocity.h5ad` | バッチ補正済み Loom 統合データ |
+| `figures_integrated_analysis/scvelo__stream.png` | Streamlines plot（velocity flow） |
+| `figures_integrated_analysis/cycle_detection.png` | クラスタサイクル（20個検出）|
+| `figures_integrated_analysis/velocity_overlay.png` | UMAP + quiver plot |
+| `figures_integrated_analysis/cluster_composition.png` | クラスタ細胞数分布 |
+| `figures_integrated_analysis/batch_distribution.png` | バッチ×クラスタのクロステーブル |
+| `figures_integrated_analysis/summary_statistics.csv` | 統計サマリー |
+
+**成果:**
+
+- メモリ使用量を **64GB → < 16GB** に削減（HVG + クラスタフィルタ）
+- 3 バッチからの Loom 統合を BBKNN でバッチ補正
+- Dynamical モデルで Velocity グラフ計算を成功させた
+- クラスタ間の 20 個の有向サイクルを検出（OG2, OG3, OG4 が多く関与）
+- バッチ効果の解析が可能に（batch_2: 534 cells, batch_3: 1,209 cells）
+
+---
+
 ## ファイル構成
 
 ```
