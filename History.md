@@ -153,3 +153,20 @@
   - Harmony インストール（現在 harmonyphpy が pip で取得できるが、Scanpy 統合 API が未対応）
   - より詳細な cell-cycle marker gene の拡張（外部データベース統合）
 
+---
+
+## 2026-06-01 セッション履歴（Copilot）
+
+- **Dynamo 解析ランナーの互換性修正**
+  - `deepvelo/run_dynamo_suture_analysis.py` に `h5py` ベースの互換化処理を追加し、`scanpy.read_h5ad()` が旧形式の `uns/log1p` を含む `E17_suture_velocity.h5ad` を読み込めるようにした。
+  - 旧形式の H5AD を検出した場合は `uns/log1p` を削除して再読み込みし、`anndata` の `IORegistryError` を回避する仕組みを実装。
+
+- **実行確認**
+  - 以下コマンドでスクリプトを実行し、H5AD の読み込みエラーが解消されたことを確認。
+    - `python deepvelo/run_dynamo_suture_analysis.py --input-file scvelo/E17_suture_velocity.h5ad --output-dir dynamo/e17_suture`
+  - これにより、Dynamo 解析パイプラインの前段階であるファイル読み込みの障害が解消された。
+
+- **今後**
+  - 続けて Dynamo の `recipe_velocity`, `dynamics`, `cell_velocities`, `VectorField` などの処理が正常に進むか確認する。
+  - 必要に応じて `E17_suture_velocity.h5ad` の再保存・プロット出力まで検証を進める。
+

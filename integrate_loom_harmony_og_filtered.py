@@ -167,13 +167,14 @@ sc.tl.pca(adata, n_comps=50)
 # ============================================================
 # 8. Batch correction with BBKNN
 # ============================================================
-print("Applying batch correction...")
-print("  Using BBKNN...")
-import bbknn
-bbknn.bbknn(adata, batch_key="batch", n_pcs=50)
+#print("Applying batch correction...")
+#print("  Using BBKNN...")
+#import bbknn
+#bbknn.bbknn(adata, batch_key="batch", n_pcs=50)
 
 # Neighbors and UMAP
-sc.pp.neighbors(adata, n_neighbors=15, n_pcs=50)
+#sc.pp.neighbors(adata, n_neighbors=15, n_pcs=50)
+sc.pp.neighbors(adata, n_neighbors=30, n_pcs=30)
 sc.tl.umap(adata)
 print("  Batch correction completed.")
 
