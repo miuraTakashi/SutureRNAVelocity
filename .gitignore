@@ -34,3 +34,27 @@ ena_runs.tsv
 
 # Local environment
 venv/
+
+# Large local analysis directories and generated data
+.RData
+.Rhistory
+*.tar
+*.tar.gz
+*.zip
+*.svg
+*.tif
+*.tiff
+*.h5
+*.gz
+*.parquet
+*.npz
+*.part
+*.joblib
+
+
+
+# Local analysis subdirectories and generated bundles
+ dymano/
+dynamo/
+dynamo-release/
+dynverse/

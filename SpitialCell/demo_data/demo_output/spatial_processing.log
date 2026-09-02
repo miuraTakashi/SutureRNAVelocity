@@ -1,0 +1,54 @@
+2026-08-19 13:24:49,576 - INFO - Starting spatial transcriptomics processing with bin2cell integration...
+2026-08-19 13:24:55,306 - INFO - Loaded AnnData: 532208 observations, 19059 variables
+2026-08-19 13:24:55,765 - INFO - After filtering: 531782 observations, 17380 variables
+2026-08-19 13:24:55,765 - INFO - MPP (microns per pixel): 0.5048651017324481
+2026-08-19 13:24:58,601 - INFO - Scaled HE image saved to demo_data/demo_output/stardist/he.tiff
+2026-08-19 13:24:58,798 - INFO - Destriping completed
+2026-08-19 13:24:58,798 - INFO - Visualizing destripe results in demo_data/demo_output/destripe...
+2026-08-19 13:24:58,798 - INFO - Reading region file...
+2026-08-19 13:24:58,798 - INFO - Found 3 regions.
+2026-08-19 13:24:58,805 - INFO - E18.5 - WT1 - Number of spots selected: 14696
+2026-08-19 13:25:06,001 - INFO - Saved: demo_data/demo_output/destripe/E18.5 - WT1_destripe.pdf
+2026-08-19 13:25:06,007 - INFO - E18.5 - CS1 - Number of spots selected: 18407
+2026-08-19 13:25:13,822 - INFO - Saved: demo_data/demo_output/destripe/E18.5 - CS1_destripe.pdf
+2026-08-19 13:25:13,828 - INFO - E18.5 - CS2 - Number of spots selected: 11456
+2026-08-19 13:25:20,564 - INFO - Saved: demo_data/demo_output/destripe/E18.5 - CS2_destripe.pdf
+2026-08-19 13:25:20,566 - INFO - Visualizing NPZ labels in demo_data/demo_output/npz_labels...
+2026-08-19 13:25:21,895 - INFO - Reading region file...
+2026-08-19 13:25:21,896 - INFO - Found 3 regions.
+2026-08-19 13:25:21,896 - INFO - E18.5 - WT1 - Cropped labels matrix shape: (951, 301)
+2026-08-19 13:25:22,231 - INFO - Saved: demo_data/demo_output/npz_labels/E18.5 - WT1_npz_labels.pdf
+2026-08-19 13:25:22,231 - INFO - E18.5 - CS1 - Cropped labels matrix shape: (919, 349)
+2026-08-19 13:25:22,506 - INFO - Saved: demo_data/demo_output/npz_labels/E18.5 - CS1_npz_labels.pdf
+2026-08-19 13:25:22,506 - INFO - E18.5 - CS2 - Cropped labels matrix shape: (729, 302)
+2026-08-19 13:25:22,786 - INFO - Saved: demo_data/demo_output/npz_labels/E18.5 - CS2_npz_labels.pdf
+2026-08-19 13:25:26,457 - INFO - Inserted and adjusted QuPath labels: [   0   84  909 ... 1097  263  980]
+2026-08-19 13:25:26,457 - INFO - Visualizing segmentation in demo_data/demo_output/segmentation...
+2026-08-19 13:25:26,457 - INFO - Reading region file...
+2026-08-19 13:25:26,457 - INFO - Found 3 regions.
+2026-08-19 13:25:26,461 - INFO - E18.5 - WT1 - Number of spots selected: 14696
+2026-08-19 13:25:30,123 - INFO - Saved: demo_data/demo_output/segmentation/E18.5 - WT1_segmentation.pdf
+2026-08-19 13:25:30,130 - INFO - E18.5 - CS1 - Number of spots selected: 18407
+2026-08-19 13:25:34,196 - INFO - Saved: demo_data/demo_output/segmentation/E18.5 - CS1_segmentation.pdf
+2026-08-19 13:25:34,202 - INFO - E18.5 - CS2 - Number of spots selected: 11456
+2026-08-19 13:25:37,470 - INFO - Saved: demo_data/demo_output/segmentation/E18.5 - CS2_segmentation.pdf
+2026-08-19 13:25:37,473 - INFO - Rendering labels in demo_data/demo_output/render_labels...
+2026-08-19 13:25:37,473 - INFO - Reading region file...
+2026-08-19 13:25:37,473 - INFO - Found 3 regions.
+2026-08-19 13:25:37,477 - INFO - E18.5 - WT1 - Number of spots selected: 14696
+2026-08-19 13:25:40,856 - INFO - Saved: demo_data/demo_output/render_labels/E18.5 - WT1_render_labels.pdf
+2026-08-19 13:25:40,862 - INFO - E18.5 - CS1 - Number of spots selected: 18407
+2026-08-19 13:25:44,248 - INFO - Saved: demo_data/demo_output/render_labels/E18.5 - CS1_render_labels.pdf
+2026-08-19 13:25:44,253 - INFO - E18.5 - CS2 - Number of spots selected: 11456
+2026-08-19 13:25:47,676 - INFO - Saved: demo_data/demo_output/render_labels/E18.5 - CS2_render_labels.pdf
+2026-08-19 13:25:56,767 - INFO - QuPath labels expanded
+2026-08-19 13:25:56,767 - INFO - Visualizing expanded labels in demo_data/demo_output/expanded_labels...
+2026-08-19 13:25:56,767 - INFO - Reading region file...
+2026-08-19 13:25:56,768 - INFO - Found 3 regions.
+2026-08-19 13:25:56,772 - INFO - E18.5 - WT1 - Number of spots selected: 14696
+2026-08-19 13:26:01,429 - INFO - Saved: demo_data/demo_output/expanded_labels/E18.5 - WT1_expanded_labels.pdf
+2026-08-19 13:26:01,435 - INFO - E18.5 - CS1 - Number of spots selected: 18407
+2026-08-19 13:26:06,639 - INFO - Saved: demo_data/demo_output/expanded_labels/E18.5 - CS1_expanded_labels.pdf
+2026-08-19 13:26:06,644 - INFO - E18.5 - CS2 - Number of spots selected: 11456
+2026-08-19 13:26:10,628 - INFO - Saved: demo_data/demo_output/expanded_labels/E18.5 - CS2_expanded_labels.pdf
+2026-08-19 13:26:14,753 - INFO - GEX grid image generated at demo_data/demo_output/stardist/gex.tiff
