@@ -57,7 +57,7 @@ awk -F '\t' 'BEGIN{OFS="\t"} NF>=9 && $9 ~ /transcript_id/ \
 ### Step 3: velocyto による spliced/unspliced カウント
 
 ```bash
-bash run_velocyto.sh
+bash scripts/run_velocyto.sh
 ```
 
 - 出力: `loom_output/E17_batch_1_*.loom`, `batch_2`, `batch_3`
@@ -68,7 +68,7 @@ bash run_velocyto.sh
 
 ```bash
 source .venv/bin/activate
-python run_scvelo.py
+python scripts/run_scvelo.py
 ```
 
 **処理内容:**
@@ -83,10 +83,10 @@ python run_scvelo.py
 | ファイル | 内容 |
 |---|---|
 | `E17_suture_velocity.h5ad` | 全細胞 velocity 解析済みデータ |
-| `velocity_driver_genes.csv` | クラスター別ドライバー遺伝子 |
-| `figures/umap_clusters.png` | 全細胞 UMAP（Leiden クラスター） |
-| `figures/scvelo_velocity_stream_dynamical.png` | velocity ストリーム |
-| `figures/scvelo_latent_time.png` | Latent time |
+| `results/tables/velocity_driver_genes.csv` | クラスター別ドライバー遺伝子 |
+| `results/figures/umap_clusters.png` | 全細胞 UMAP（Leiden クラスター） |
+| `results/figures/scvelo_velocity_stream_dynamical.png` | velocity ストリーム |
+| `results/figures/scvelo_latent_time.png` | Latent time |
 
 ---
 
@@ -108,7 +108,7 @@ python run_scvelo.py
 `GSE163693_E15_17_composite_metadata.csv.gz` の `Cluster` 列を使用。E17.5 の OG1–OG4 バーコード（計 1,772 細胞）を正確に取得。
 
 ```bash
-python run_og_exact.py
+python scripts/run_og_exact.py
 ```
 
 **細胞数:**
@@ -125,10 +125,10 @@ python run_og_exact.py
 | ファイル | 内容 |
 |---|---|
 | `E17_og_exact_velocity.h5ad` | OG サブセット velocity 解析済みデータ |
-| `og_exact_velocity_driver_genes.csv` | OG 別ドライバー遺伝子 |
-| `figures_og_exact/velocity_stream.png` | OG サブセット velocity ストリーム |
-| `figures_og_exact/latent_time.png` | Latent time |
-| `figures_og_exact/proportions.png` | Spliced/unspliced 比率 |
+| `results/tables/og_exact_velocity_driver_genes.csv` | OG 別ドライバー遺伝子 |
+| `results/figures_og_exact/velocity_stream.png` | OG サブセット velocity ストリーム |
+| `results/figures_og_exact/latent_time.png` | Latent time |
+| `results/figures_og_exact/proportions.png` | Spliced/unspliced 比率 |
 
 ---
 
@@ -137,7 +137,7 @@ python run_og_exact.py
 velocity ストリームがループ状に見えたため、分化方向を固定せず双方向性（脱分化 OG4→OG3 を含む）かつ、**必ず終末状態に吸収されるという仮定を置かない**形でトポロジーを評価する。
 
 ```bash
-python run_og_cellrank.py
+python scripts/run_og_cellrank.py
 ```
 
 **PAGA 遷移強度（エッジ重み）:**
@@ -156,18 +156,18 @@ CellRank では `VelocityKernel` + `ConnectivityKernel` により**非対称（�
 
 | ファイル | 内容 |
 |---|---|
-| `figures_og_exact/og_paga_graph.png` | PAGA トポロジーグラフ |
-| `figures_og_exact/cr_macrostates.png` | GPCCA マクロ状態 |
-| `figures_og_exact/cr_diff_vector_field.png` | OG クラスター間の分化ベクトル場（正味フラックス） |
+| `results/figures_og_exact/og_paga_graph.png` | PAGA トポロジーグラフ |
+| `results/figures_og_exact/cr_macrostates.png` | GPCCA マクロ状態 |
+| `results/figures_og_exact/cr_diff_vector_field.png` | OG クラスター間の分化ベクトル場（正味フラックス） |
 
 **主な出力:**
 | ファイル | 内容 |
 |---|---|
-| `figures_og_exact/og_paga_graph.png` | PAGA トポロジーグラフ |
-| `figures_og_exact/cr_macrostates.png` | GPCCA マクロ状態 |
-| `figures_og_exact/cr_initial_terminal.png` | 初期・終末状態 |
-| `figures_og_exact/cr_fate_probabilities.png` | 各細胞の運命確率 |
-| `figures_og_exact/cr_fate_heatmap.png` | OG クラスター別運命確率ヒートマップ |
+| `results/figures_og_exact/og_paga_graph.png` | PAGA トポロジーグラフ |
+| `results/figures_og_exact/cr_macrostates.png` | GPCCA マクロ状態 |
+| `results/figures_og_exact/cr_initial_terminal.png` | 初期・終末状態 |
+| `results/figures_og_exact/cr_fate_probabilities.png` | 各細胞の運命確率 |
+| `results/figures_og_exact/cr_fate_heatmap.png` | OG クラスター別運命確率ヒートマップ |
 
 ---
 
@@ -176,7 +176,7 @@ CellRank では `VelocityKernel` + `ConnectivityKernel` により**非対称（�
 velocity のループが真の生物学的現象か解析上のアーティファクトかを検証。
 
 ```bash
-python run_og_local_velocity.py
+python scripts/run_og_local_velocity.py
 ```
 
 **Velocity confidence（局所一貫性スコア）:**
@@ -193,36 +193,36 @@ python run_og_local_velocity.py
 **主な出力:**
 | ファイル | 内容 |
 |---|---|
-| `figures_og_exact/local_grid_velocity.png` | グリッド矢印（密度比較） |
-| `figures_og_exact/local_smooth_compare.png` | 平滑化パラメータ比較 |
-| `figures_og_exact/local_phase_portraits.png` | 位相ポートレート |
-| `figures_og_exact/pca_stream.png` | PCA 空間での velocity |
-| `figures_og_exact/local_velocity_confidence.png` | coherence スコア |
+| `results/figures_og_exact/local_grid_velocity.png` | グリッド矢印（密度比較） |
+| `results/figures_og_exact/local_smooth_compare.png` | 平滑化パラメータ比較 |
+| `results/figures_og_exact/local_phase_portraits.png` | 位相ポートレート |
+| `results/figures_og_exact/pca_stream.png` | PCA 空間での velocity |
+| `results/figures_og_exact/local_velocity_confidence.png` | coherence スコア |
 
 ### Step 8: クラスタサイクル検出
 
 OG1–OG4 + PO1–PO2 のクラスタ間遷移から有向サイクルを検出し、サイクルを構成するエッジを赤色で強調表示します。
 
 ```bash
-python run_og_cycle_detection.py
+python scripts/run_og_cycle_detection.py
 ```
 
 **主な出力:**
 | ファイル | 内容 |
 |---|---|
-| `cycle_detection/cluster_cycle_strengths.png` | クラスタサイクルとエッジ強度の可視化 |
+| `results/cycle_detection/cluster_cycle_strengths.png` | クラスタサイクルとエッジ強度の可視化 |
 
 ### Step 9: cell-cycle scoring の検証
 
 OG1–OG4 + PO1–PO2 の cell-cycle score を計算し、UMAP、ボックスプロット、クラスター平均値グラフを作成するスクリプトです。
 
 ```bash
-python run_cell_cycle_scoring.py
+python scripts/run_cell_cycle_scoring.py
 ```
 
 **注意:**
-- 現在の `E17_og_exact_velocity.h5ad` には canonical cell cycle marker genes が含まれておらず、`run_cell_cycle_scoring.py` は有効な遺伝子が見つからない場合に停止します。
-- エラーが発生した場合は、`figures_cell_cycle/cell_cycle_error.txt` に詳細を出力します。
+- 現在の `E17_og_exact_velocity.h5ad` には canonical cell cycle marker genes が含まれておらず、`scripts/run_cell_cycle_scoring.py` は有効な遺伝子が見つからない場合に停止します。
+- エラーが発生した場合は、`results/figures_cell_cycle/cell_cycle_error.txt` に詳細を出力します。
 
 ---
 
@@ -232,14 +232,14 @@ python run_cell_cycle_scoring.py
 
 ```bash
 # Step 10a: Loomファイル統合 + バッチ補正
-python integrate_loom_harmony_og_filtered.py
+python scripts/integrate_loom_harmony_og_filtered.py
 
 # Step 10b: Velocityグラフ計算（Dynamicalモデル）  
-python compute_velocity_robust.py
+python scripts/compute_velocity_robust.py
 
 # Step 10c: ストリームプロット・サイクル検出・統計分析
-python run_final_analysis.py
-python generate_streamplot.py
+python scripts/run_final_analysis.py
+python scripts/generate_streamplot.py
 ```
 
 **処理フロー:**
@@ -259,12 +259,12 @@ python generate_streamplot.py
 | ファイル | 内容 |
 |---|---|
 | `E17_og_integrated_harmony_filtered_velocity.h5ad` | バッチ補正済み Loom 統合データ |
-| `figures_integrated_analysis/scvelo__stream.png` | Streamlines plot（velocity flow） |
-| `figures_integrated_analysis/cycle_detection.png` | クラスタサイクル（20個検出）|
-| `figures_integrated_analysis/velocity_overlay.png` | UMAP + quiver plot |
-| `figures_integrated_analysis/cluster_composition.png` | クラスタ細胞数分布 |
-| `figures_integrated_analysis/batch_distribution.png` | バッチ×クラスタのクロステーブル |
-| `figures_integrated_analysis/summary_statistics.csv` | 統計サマリー |
+| `results/figures_integrated_analysis/scvelo__stream.png` | Streamlines plot（velocity flow） |
+| `results/figures_integrated_analysis/cycle_detection.png` | クラスタサイクル（20個検出）|
+| `results/figures_integrated_analysis/velocity_overlay.png` | UMAP + quiver plot |
+| `results/figures_integrated_analysis/cluster_composition.png` | クラスタ細胞数分布 |
+| `results/figures_integrated_analysis/batch_distribution.png` | バッチ×クラスタのクロステーブル |
+| `results/figures_integrated_analysis/summary_statistics.csv` | 統計サマリー |
 
 **成果:**
 
@@ -278,32 +278,37 @@ python generate_streamplot.py
 
 ## ファイル構成
 
+2026-10-28 に整理しました（整理前→整理後の対応表: `docs/path_map_20261028.tsv`）。
+スクリプトはリポジトリ直下を基準にパスを解決するので、`python scripts/xxx.py` のようにリポジトリ直下から実行してください。
+
 ```
 SutureRNAVelocity/
-├── README.md                          # 本ファイル
-├── RNA_velocity_workflow.md           # 詳細ワークフロー
-├── aria2c_download.txt                # BAM ダウンロードリスト
-├── run_velocyto.sh                    # velocyto 実行スクリプト
-├── run_scvelo.py                      # 全細胞 scVelo 解析
-├── run_og_exact.py                    # OG1-4 サブセット解析（確定版）
-├── run_og_cellrank.py                 # CellRank 脱分化解析
-├── run_og_local_velocity.py           # 局所 velocity 可視化
-│
-├── gencode.vM25.nochr.gtf             # 解析用 GTF（chr プレフィックス除去済み）
+├── README.md / History.md / RNA_velocity_workflow.md
+├── pyproject.toml, uv.lock, .venv/    # Python 環境
+├── aria2c_download.txt, ena_runs.tsv  # BAM ダウンロードリスト
 ├── E17_barcodes.tsv                   # E17 バーコードリスト
-│
-├── GSE163693_RAW/                     # GEO 発現行列（10x v2 形式）
 ├── GSE163693_E15_17_composite_metadata.csv.gz  # 論文クラスターラベル
-├── downloads/                         # BAM ファイル
+├── 20240618_cor_sub2.h5ad
+│
+├── scripts/                           # 解析スクリプト（run_*.py, generate_*.py, make_pptx*.py, *.sh）
+│   ├── run_velocyto.sh                #   velocyto 実行スクリプト
+│   ├── run_scvelo.py                  #   全細胞 scVelo 解析
+│   ├── run_og_exact.py                #   OG1-4 サブセット解析（確定版）
+│   ├── run_og_cellrank.py             #   CellRank 脱分化解析
+│   ├── run_og_local_velocity.py       #   局所 velocity 可視化
+│   └── deepvelo/                      #   dynamo 解析ランナー
+├── notebooks/                         # SpatialCell デモ, dynverse チュートリアル
+├── results/
+│   ├── figures/, figures_*/           # 図（figures_og_exact/ = OG1-4 サブセット解析）
+│   ├── cycle_detection*/, dynamo/     # サイクル検出・dynamo の出力
+│   └── tables/                        # driver genes, cluster summary, marker genes
+├── docs/                              # pptx, SutureModel.jpg, 参考 PDF, venv パッケージ一覧
+├── external/dynamo-release/           # dynamo ソース（.venv にインストール済み）
+├── archive/scripts/                   # 旧版スクリプト（generate_velocity_cluster_plots v1–v6 など）
+│
 ├── loom_output/                       # velocyto 出力 loom ファイル
-│
-├── E17_suture_velocity.h5ad           # 全細胞解析済み AnnData
-├── E17_og_exact_velocity.h5ad         # OG1-4 サブセット AnnData
-├── velocity_driver_genes.csv          # 全細胞ドライバー遺伝子
-├── og_exact_velocity_driver_genes.csv # OG ドライバー遺伝子
-│
-├── figures/                           # 全細胞解析の図
-└── figures_og_exact/                  # OG1-4 サブセット解析の図
+├── scvelo/                            # AnnData（E17_suture_velocity.h5ad, E17_og_exact_velocity.h5ad など）
+└── SpatialCell/, spatialcell_demo_work/, spatialcell_run/  # 空間トランスクリプトーム
 ```
 
 ---

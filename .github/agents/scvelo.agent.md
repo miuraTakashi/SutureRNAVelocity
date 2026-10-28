@@ -20,4 +20,4 @@ You are a specialist for scVelo-driven RNA velocity analysis and visualization i
 ## Output Format
 - If editing files, return the exact file path and patch contents.
 - If recommending commands, return the exact shell command(s) and the target script(s).
-- If generating a summary, return a concise plan for creating the PPTX with references to existing files like `make_pptx.py`, `plot_cluster_stream_on_umap.py`, or `SutureRNAVelocity_Results.pptx`.
+- If generating a summary, return a concise plan for creating the PPTX with references to existing files like `scripts/make_pptx.py`, `scripts/plot_cluster_stream_on_umap.py`, or `docs/SutureRNAVelocity_Results.pptx`.
